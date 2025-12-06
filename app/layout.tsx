@@ -37,7 +37,9 @@ export default function RootLayout({
                     <Image
                       src="/flood.png"
                       alt="FloodRadar Logo"
-                      className="h-8 w-8 rounded-md"
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 rounded-md object-cover"
                     />
                   </div>
 
