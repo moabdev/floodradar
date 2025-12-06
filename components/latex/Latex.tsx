@@ -1,8 +1,18 @@
 "use client"
 
 import "katex/dist/katex.min.css"
-import TeX from "react-katex"
+import { BlockMath, InlineMath } from "react-katex"
 
-export function Latex({ value }: { value: string }) {
-  return <TeX math={value} block className="my-4 text-lg" />
+export function Latex({
+  value,
+  inline = false,
+}: {
+  value: string
+  inline?: boolean
+}) {
+  return inline ? (
+    <InlineMath math={value} />
+  ) : (
+    <BlockMath math={value} />
+  )
 }
