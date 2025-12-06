@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ThemeProvider } from "@/components/theme-provider"
 import { DesktopNav } from "@/components/desktop-nav"
 import { MobileNav } from "@/components/mobile-nav"
+import Image from "next/image"
 
 
 export const metadata: Metadata = {
@@ -33,7 +34,11 @@ export default function RootLayout({
                     bg-primary/10 text-primary font-bold group-hover:bg-primary/20
                     transition-colors
                   ">
-                    FR
+                    <Image
+                      src="/flood.png"
+                      alt="FloodRadar Logo"
+                      className="h-8 w-8 rounded-md"
+                    />
                   </div>
 
                   <div className="leading-tight hidden sm:block">
