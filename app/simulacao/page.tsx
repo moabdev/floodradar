@@ -1,13 +1,20 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 
 import { rodarSimulacao, SimPoint } from "@/lib/simulador"
+
 import { ChartIntensidadeDrenagem } from "@/components/charts/chart-intensidade-drenagem"
 import { ChartAcumuloAgua } from "@/components/charts/chart-acumulo"
 import { ChartDerivada } from "@/components/charts/chart-derivada"
@@ -28,24 +35,34 @@ export default function SimulacaoPage() {
   const ultimo = dados?.[dados.length - 1]
 
   return (
-    <div className="space-y-12">
-      <section>
-        <h1 className="text-3xl font-semibold tracking-tight">Simulação</h1>
-        <p className="text-muted-foreground max-w-2xl">
-          Ajuste intensidade de chuva I(t), capacidade de drenagem D(t) e
-          duração da chuva. O modelo calcula o acúmulo A(t), a derivada A′(t)
-          e um indicador de risco hidrológico.
+    <div className="space-y-14">
+
+      {/* INTRODUÇÃO */}
+      <section className="space-y-3">
+        <h1 className="text-4xl font-bold tracking-tight">
+          Simulação Hidrológica
+        </h1>
+
+        <p className="text-muted-foreground max-w-2xl leading-relaxed">
+          Explore como chuva, drenagem e tempo de exposição influenciam o 
+          comportamento hidrológico de uma região. O modelo utiliza 
+          <span className="font-medium"> Cálculo I </span> para estimar acúmulo{" "}
+          <strong>A(t)</strong>, derivada <strong>A′(t)</strong> e{" "}
+          <strong>nível de risco</strong>.
         </p>
       </section>
 
+      {/* PARÂMETROS */}
       <Card>
         <CardHeader>
-          <CardTitle>Parâmetros da simulação</CardTitle>
+          <CardTitle>Parâmetros da Simulação</CardTitle>
           <CardDescription>
-            Valores em mm/h e horas. Não há persistência: tudo acontece localmente no navegador.
+            Insira valores em mm/h e horas. Os cálculos são instantâneos e rodados localmente.
           </CardDescription>
         </CardHeader>
+
         <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {/* Intensidade */}
           <div className="space-y-2">
             <Label>Intensidade da chuva I(t)</Label>
             <Input
@@ -55,6 +72,7 @@ export default function SimulacaoPage() {
             />
           </div>
 
+          {/* Drenagem */}
           <div className="space-y-2">
             <Label>Drenagem D(t)</Label>
             <Input
@@ -64,6 +82,7 @@ export default function SimulacaoPage() {
             />
           </div>
 
+          {/* Duração */}
           <div className="space-y-2">
             <Label>Duração (horas)</Label>
             <Input
@@ -74,50 +93,75 @@ export default function SimulacaoPage() {
             />
           </div>
 
-          <div className="sm:col-span-3">
-            <Button className="w-full" onClick={handleSimular}>
-              Rodar simulação
+          {/* BOTÃO */}
+          <div className="sm:col-span-3 pt-2">
+            <Button className="w-full text-base py-5" onClick={handleSimular}>
+              Rodar Simulação
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* RESULTADOS */}
       {dados && ultimo && (
         <>
-          <Separator />
+          <Separator className="my-10" />
 
-          {/* KPIs */}
+          {/* MÉTRICAS PRINCIPAIS */}
           <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <Kpi title="Nível final A(t)" value={`${ultimo.A.toFixed(1)} mm`} />
+
             <Kpi title="Derivada final A′(t)" value={`${ultimo.dA.toFixed(1)} mm/h`} />
-            <Kpi title="Risco final" value={`${ultimo.risco.toFixed(0)} %`} />
+
+            <Kpi
+              title="Risco final"
+              value={`${ultimo.risco.toFixed(0)} %`}
+              highlight={ultimo.risco >= 70}
+            />
           </section>
 
-          <Separator />
+          <Separator className="my-10" />
 
-          {/* Gráficos principais */}
+          {/* GRÁFICOS — primeira linha */}
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ChartCard title="Intensidade × Drenagem">
+            <ChartCard
+              title="Intensidade × Drenagem"
+              description="Comparação direta entre I(t) e D(t)"
+            >
               <ChartIntensidadeDrenagem data={dados} />
             </ChartCard>
 
-            <ChartCard title="Derivada A′(t)">
+            <ChartCard
+              title="Derivada A′(t)"
+              description="Mostra tendência de crescimento ou redução do nível"
+            >
               <ChartDerivada data={dados} />
             </ChartCard>
           </section>
 
+          {/* ACÚMULO */}
           <section>
-            <ChartCard title="Acúmulo A(t)">
+            <ChartCard
+              title="Acúmulo A(t)"
+              description="Evolução do volume acumulado ao longo do tempo"
+            >
               <ChartAcumuloAgua data={dados} />
             </ChartCard>
           </section>
 
+          {/* RISCO */}
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ChartCard title="Radar de risco">
+            <ChartCard
+              title="Radar de risco"
+              description="Representação visual circular do risco final"
+            >
               <ChartRadar value={ultimo.risco} />
             </ChartCard>
 
-            <ChartCard title="Risco ao longo do tempo">
+            <ChartCard
+              title="Risco ao longo do tempo"
+              description="Como o risco hidrológico evolui durante toda a chuva"
+            >
               <ChartRisco data={dados} />
             </ChartCard>
           </section>
@@ -127,14 +171,28 @@ export default function SimulacaoPage() {
   )
 }
 
-function Kpi({ title, value }: { title: string; value: string }) {
+function Kpi({
+  title,
+  value,
+  highlight,
+}: {
+  title: string
+  value: string
+  highlight?: boolean
+}) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-3xl font-semibold">{value}</p>
+        <p
+          className={`text-3xl font-semibold ${
+            highlight ? "text-red-500 dark:text-red-400" : ""
+          }`}
+        >
+          {value}
+        </p>
       </CardContent>
     </Card>
   )
@@ -142,16 +200,22 @@ function Kpi({ title, value }: { title: string; value: string }) {
 
 function ChartCard({
   title,
+  description,
   children,
 }: {
   title: string
+  description?: string
   children: React.ReactNode
 }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
+        <CardTitle className="text-lg">{title}</CardTitle>
+        {description && (
+          <CardDescription>{description}</CardDescription>
+        )}
       </CardHeader>
+
       <CardContent>
         <div className="w-full max-w-full overflow-hidden">{children}</div>
       </CardContent>
