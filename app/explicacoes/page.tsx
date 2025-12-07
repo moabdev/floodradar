@@ -1,90 +1,95 @@
+"use client"
+
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Latex } from "@/components/latex/Latex"
 
 export default function ExplicacoesPage() {
   return (
-    <div className="space-y-10">
-      <section>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Explicações Intuitivas
-        </h1>
-        <p className="text-muted-foreground max-w-2xl">
-          Aqui conectamos os símbolos matemáticos às ideias intuitivas de
-          enchentes, acúmulo de água e risco. Ideal para explicar o projeto
-          na apresentação.
-        </p>
-      </section>
+    <div className="space-y-12">
+      <h1 className="text-4xl font-bold tracking-tight">Explicações Didáticas</h1>
 
+      {/* DIAGRAMA 1 */}
       <Card>
         <CardHeader>
-          <CardTitle>Integral como acúmulo</CardTitle>
+          <CardTitle>Como a chuva gera acúmulo de água</CardTitle>
         </CardHeader>
-        <CardContent className="prose dark:prose-invert max-w-none">
-          <p>
-            A integral pode ser vista como uma <strong>soma contínua</strong>.
-            No nosso caso, ela soma a diferença entre a chuva que entra e a
-            água que sai pela drenagem.
-          </p>
-
-          <Latex value={`A(t) = A(0) + \\int_0^t \\big(I(s) - D(s)\\big)\\,ds`} />
-
-          <p>
-            Em vez de implementar a integral contínua, usamos uma aproximação
-            por passos discretos de 1 hora, o que leva à fórmula usada no código:
-          </p>
-
-          <Latex value={`A(t+1) = A(t) + (I - D)`} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Derivada como “velocímetro do risco”</CardTitle>
-        </CardHeader>
-        <CardContent className="prose dark:prose-invert max-w-none">
-          <p>
-            A derivada A′(t) funciona como um <strong>velocímetro</strong> do
-            nível de água: diz se o nível está subindo, descendo ou parado
-            naquele instante.
-          </p>
-
-          <Latex value={`A'(t) = I(t) - D(t)`} />
-
-          <p>
-            Se A′(t) é positivo e grande, o risco ainda pode estar abaixo de um
-            limiar, mas a <strong>tendência</strong> é de chegar em uma situação
-            crítica rapidamente.
+        <CardContent className="space-y-4">
+          <DiagramChuva />
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            A chuva <strong>I(t)</strong> entra no sistema, mas a drenagem possui um limite{" "}
+            <strong>D<sub>max</sub></strong>. Sempre que a chuva ultrapassa esse limite,
+            o excedente se transforma em acúmulo <strong>A(t)</strong>.  
+            Isso explica por que eventos intensos ou prolongados podem causar aumento
+            rápido do nível d’água.
           </p>
         </CardContent>
       </Card>
 
+      {/* DIAGRAMA 2 */}
       <Card>
         <CardHeader>
-          <CardTitle>Do modelo matemático ao gráfico</CardTitle>
+          <CardTitle>Como o risco aumenta</CardTitle>
         </CardHeader>
-        <CardContent className="prose dark:prose-invert max-w-none">
-          <p>
-            Cada gráfico do FloodRadar é apenas uma representação visual de
-            funções matemáticas simples:
-          </p>
-
-          <ul>
-            <li>O gráfico de A(t) mostra como o acúmulo evolui no tempo.</li>
-            <li>
-              O gráfico de A′(t) mostra se estamos acelerando ou freando o risco.
-            </li>
-            <li>
-              O gráfico de risco(t) traduz A(t) em uma escala percentual de 0 a 100.
-            </li>
-          </ul>
-
-          <p>
-            Isso deixa claro para a banca que há uma relação direta entre o
-            <strong>código</strong>, os <strong>gráficos</strong> e o
-            <strong>conteúdo de Cálculo I</strong>.
+        <CardContent className="space-y-4">
+          <DiagramRisco />
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            O risco é proporcional ao quanto o acúmulo <strong>A(t)</strong> se aproxima do
+            limite físico da região <strong>A<sub>max</sub></strong>.  
+            Quanto maior a proporção, mais próximo o sistema está de uma enchente grave.
           </p>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function DiagramChuva() {
+  return (
+    <div className="p-4 border rounded-lg bg-muted/30 text-sm flex flex-col gap-3">
+
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 bg-sky-400 rounded-full" />
+        <span>Chuva I(t)</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 bg-orange-500 rounded-full" />
+        <span>Drenagem Dₘₐₓ</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 bg-blue-600 rounded-full" />
+        <span>Acúmulo A(t)</span>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        O acúmulo cresce quando <strong>I(t) &gt; Dₘₐₓ</strong>.  
+        Caso contrário, não há aumento de nível.
+      </p>
+    </div>
+  )
+}
+
+function DiagramRisco() {
+  return (
+    <div className="p-4 border rounded-lg bg-muted/30 text-sm flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <div className="w-full h-2 bg-blue-300 rounded" />
+        <span>0%</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="w-full h-2 bg-yellow-300 rounded" />
+        <span>50%</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="w-full h-2 bg-red-500 rounded" />
+        <span>100%</span>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        À medida que <strong>A(t) → A<sub>max</sub></strong>, o risco cresce até 100%.
+      </p>
     </div>
   )
 }

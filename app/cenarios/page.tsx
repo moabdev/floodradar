@@ -1,194 +1,259 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-import { rodarSimulacao, SimPoint } from "@/lib/simulador"
+import {
+  rodarSimulacaoAvancadaVariavel,
+  SimPointVariavel,
+} from "@/lib/simulador-variavel"
+import { analisarCenario, compararCenarios } from "@/lib/comparador"
 
 import { ChartAcumuloAgua } from "@/components/charts/chart-acumulo"
-import { ChartDerivada } from "@/components/charts/chart-derivada"
 import { ChartRisco } from "@/components/charts/chart-risco"
 import { ChartIntensidadeDrenagem } from "@/components/charts/chart-intensidade-drenagem"
 
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { motion } from "framer-motion"
+import { cn } from "@/lib/utils"
+
 export default function CenariosPage() {
-  const [cenarios, setCenarios] = useState([
-    { I: 12, D: 7, horas: 4, dados: null as SimPoint[] | null },
-    { I: 18, D: 6, horas: 4, dados: null as SimPoint[] | null },
-    { I: 25, D: 10, horas: 4, dados: null as SimPoint[] | null },
+  const [horas, setHoras] = useState(5)
+
+  const [chuva, setChuva] = useState<string[][]>([
+    ["12", "15", "20", "5", "0"],
+    ["8", "10", "25", "30", "12"],
+    ["20", "22", "18", "15", "10"],
   ])
 
-  function atualizarCampo(index: number, campo: string, valor: number) {
-    const clone = [...cenarios]
-    clone[index] = { ...clone[index], [campo]: valor }
-    setCenarios(clone)
+  const [Dmax, setDmax] = useState<number[]>([10, 8, 12])
+  const [Amax, setAmax] = useState(120)
+  const [A0, setA0] = useState(10)
+
+  const [dados, setDados] = useState<SimPointVariavel[][]>([])
+  const [resumo, setResumo] = useState<any>(null)
+
+  function atualizarHoras(n: number) {
+    if (!Number.isFinite(n) || n < 1) return
+    setHoras(n)
+
+    setChuva(prev =>
+      prev.map(cenario => {
+        const novo = [...cenario]
+        while (novo.length < n) novo.push("0")
+        while (novo.length > n) novo.pop()
+        return novo
+      }),
+    )
   }
 
-  function rodarTodos() {
-    const novos = cenarios.map((c) => ({
-      ...c,
-      dados: rodarSimulacao(c.I, c.D, c.horas),
-    }))
-    setCenarios(novos)
+  function simular() {
+    const series = chuva.map((c, i) =>
+      rodarSimulacaoAvancadaVariavel({
+        chuva: c.map(Number),
+        D_max: Dmax[i],
+        A_max: Amax,
+        A0,
+      }),
+    )
+
+    setDados(series)
+
+    const analises = series.map(analisarCenario)
+    const comparacao = compararCenarios(analises)
+
+    setResumo(comparacao)
   }
 
   return (
-    <div className="space-y-12">
-      <section>
-        <h1 className="text-3xl font-semibold tracking-tight">Modo Cenários</h1>
-        <p className="text-muted-foreground max-w-2xl">
-          Compare até três cenários hidrológicos simultaneamente, alterando intensidade de chuva,
-          drenagem e duração. O objetivo é avaliar a sensibilidade do modelo e entender como pequenas
-          mudanças nos parâmetros afetam o risco final.
-        </p>
-      </section>
+    <div className="space-y-16 pb-20">
+      <h1 className="text-4xl font-bold tracking-tight">
+        Cenários de Chuva Variável
+      </h1>
 
-      {/* Formulário dos três cenários */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {cenarios.map((c, i) => (
-          <Card key={i}>
-            <CardHeader>
-              <CardTitle>Cenário {i + 1}</CardTitle>
-              <CardDescription>Parâmetros independentes</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+      {/* PARÂMETROS GERAIS */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Parâmetros dos Cenários</CardTitle>
+        </CardHeader>
 
-              <div className="space-y-1">
-                <Label>Intensidade I(t)</Label>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="space-y-3">
+              <Label>Duração (horas)</Label>
+              <Input
+                type="number"
+                min={1}
+                value={horas}
+                onChange={e => atualizarHoras(Number(e.target.value))}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label>Amax</Label>
+              <Input
+                type="number"
+                value={Amax}
+                onChange={e => setAmax(Number(e.target.value))}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label>A0</Label>
+              <Input
+                type="number"
+                value={A0}
+                onChange={e => setA0(Number(e.target.value))}
+              />
+            </div>
+          </div>
+
+          {/* PARÂMETROS POR CENÁRIO */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {chuva.map((cenario, i) => (
+              <div key={i} className="border rounded-lg p-4 space-y-3">
+                <h2 className="font-semibold">Cenário {i + 1}</h2>
+
+                <Label>Chuva I(t) hora a hora</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                  {cenario.map((v, h) => (
+                    <Input
+                      key={h}
+                      type="number"
+                      value={v}
+                      onChange={e => {
+                        const arr = chuva.map(row => [...row])
+                        arr[i][h] = e.target.value
+                        setChuva(arr)
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <Label>Dmax</Label>
                 <Input
                   type="number"
-                  value={c.I}
-                  onChange={(e) => atualizarCampo(i, "I", Number(e.target.value))}
+                  value={Dmax[i]}
+                  onChange={e => {
+                    const arr = [...Dmax]
+                    arr[i] = Number(e.target.value)
+                    setDmax(arr)
+                  }}
                 />
               </div>
+            ))}
+          </div>
 
-              <div className="space-y-1">
-                <Label>Drenagem D(t)</Label>
-                <Input
-                  type="number"
-                  value={c.D}
-                  onChange={(e) => atualizarCampo(i, "D", Number(e.target.value))}
-                />
-              </div>
+          <Button className="w-full py-5 text-lg" onClick={simular}>
+            Rodar Cenários
+          </Button>
+        </CardContent>
+      </Card>
 
-              <div className="space-y-1">
-                <Label>Duração (horas)</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={c.horas}
-                  onChange={(e) => atualizarCampo(i, "horas", Number(e.target.value))}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <Button size="lg" className="w-full" onClick={rodarTodos}>
-        Rodar Todos os Cenários
-      </Button>
-
-      <Separator />
-
-      {/* Resultados lado a lado */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {cenarios.map((c, i) => {
-          if (!c.dados) return null
-          const ultimo = c.dados[c.dados.length - 1]
-
-          return (
-            <Card key={i}>
-              <CardHeader>
-                <CardTitle>Resultados — Cenário {i + 1}</CardTitle>
-                <CardDescription>Resumo hidrológico</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p><strong>Nível final A(t):</strong> {ultimo.A.toFixed(1)} mm</p>
-                <p><strong>Derivada final A′(t):</strong> {ultimo.dA.toFixed(1)} mm/h</p>
-                <p><strong>Risco final:</strong> {ultimo.risco.toFixed(0)}%</p>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-
-      <Separator />
-
-      {/* Gráficos comparativos */}
-      <section>
-        <h2 className="text-xl font-semibold">Comparação Visual</h2>
-        <p className="text-muted-foreground mb-4">
-          Abaixo você pode comparar o comportamento hidrológico dos três cenários simultaneamente.
-        </p>
-
+      {/* RELATÓRIO GERAL */}
+      {resumo && (
         <Card>
           <CardHeader>
-            <CardTitle>Intensidade × Drenagem</CardTitle>
+            <CardTitle>Relatório de Comparação</CardTitle>
           </CardHeader>
-          <CardContent>
-            {cenarios.map((c, i) => (
-              c.dados && (
-                <div key={i} className="mb-10">
-                  <p className="font-semibold mb-2">Cenário {i + 1}</p>
-                  <ChartIntensidadeDrenagem data={c.dados} />
-                </div>
-              )
-            ))}
-          </CardContent>
-        </Card>
 
-        <Card className="mt-10">
-          <CardHeader>
-            <CardTitle>Acúmulo A(t)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {cenarios.map((c, i) => (
-              c.dados && (
-                <div key={i} className="mb-10">
-                  <p className="font-semibold mb-2">Cenário {i + 1}</p>
-                  <ChartAcumuloAgua data={c.dados} />
-                </div>
-              )
-            ))}
-          </CardContent>
-        </Card>
+          <CardContent className="text-lg space-y-3">
+            <p>
+              🔥 Cenário mais perigoso:
+              <strong> Cenário {resumo.ranking[0] + 1}</strong>
+            </p>
 
-        <Card className="mt-10">
-          <CardHeader>
-            <CardTitle>Derivada A′(t)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {cenarios.map((c, i) => (
-              c.dados && (
-                <div key={i} className="mb-10">
-                  <p className="font-semibold mb-2">Cenário {i + 1}</p>
-                  <ChartDerivada data={c.dados} />
-                </div>
-              )
-            ))}
-          </CardContent>
-        </Card>
+            <p>
+              🌧️ Maior risco registrado:
+              <strong> {resumo.maisPerigoso.riscoMax.toFixed(1)}%</strong>
+            </p>
 
-        <Card className="mt-10">
-          <CardHeader>
-            <CardTitle>Risco ao longo do tempo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {cenarios.map((c, i) => (
-              c.dados && (
-                <div key={i} className="mb-10">
-                  <p className="font-semibold mb-2">Cenário {i + 1}</p>
-                  <ChartRisco data={c.dados} />
-                </div>
-              )
-            ))}
+            <p>
+              📊 Diferença entre os dois piores:
+              <strong> {resumo.diferencas.entre1e2.toFixed(1)}%</strong>
+            </p>
           </CardContent>
         </Card>
-      </section>
+      )}
+
+      {/* ABAS DOS CENÁRIOS */}
+      {dados.length > 0 && (
+        <Tabs defaultValue="0" className="w-full">
+          <TabsList className="w-full flex justify-center gap-2 bg-transparent">
+            {dados.map((_, i) => {
+              const icone = i === 0 ? "🌧️" : i === 1 ? "⚠️" : "💧"
+
+              return (
+                <TabsTrigger
+                  key={i}
+                  value={String(i)}
+                  className={cn(
+                    "px-6 py-3 text-lg font-medium rounded-xl transition-all",
+                    "data-[state=active]:bg-blue-600 data-[state=active]:text-white",
+                    "data-[state=inactive]:bg-blue-100 data-[state=inactive]:text-blue-700",
+                    "hover:scale-105 hover:shadow-md",
+                  )}
+                >
+                  {icone} Cenário {i + 1}
+                </TabsTrigger>
+              )
+            })}
+          </TabsList>
+
+          {dados.map((serie, i) => (
+            <TabsContent key={i} value={String(i)}>
+              <motion.div
+                className="w-full"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="w-full mt-6 shadow-lg rounded-xl">
+                  <CardHeader>
+                    <CardTitle className="text-2xl flex items-center gap-2">
+                      {i === 0 && "🌧️"}
+                      {i === 1 && "⚠️"}
+                      {i === 2 && "💧"}
+                      Cenário {i + 1}
+                    </CardTitle>
+                  </CardHeader>
+
+                  <CardContent className="space-y-6">
+                    {/* RESUMO INDIVIDUAL */}
+                    {resumo?.cenarios[i] && (
+                      <div className="p-4 bg-slate-650 rounded-lg border border-blue-200">
+                        <h3 className="text-xl font-semibold mb-2">
+                          Resumo do Cenário
+                        </h3>
+                        <p>
+                          <strong>Risco Máximo:</strong>{" "}
+                          {resumo.cenarios[i].riscoMax.toFixed(1)}%
+                        </p>
+                        <p>
+                          <strong>Acúmulo Máximo:</strong>{" "}
+                          {resumo.cenarios[i].acumuloMax.toFixed(1)} mm
+                        </p>
+                        <p>
+                          <strong>Drenagem Máx.:</strong>{" "}
+                          {resumo.cenarios[i].drenagemMax.toFixed(1)} mm/h
+                        </p>
+                      </div>
+                    )}
+
+                    {/* GRÁFICOS */}
+                    <ChartAcumuloAgua data={serie} />
+                    <ChartRisco data={serie} />
+                    <ChartIntensidadeDrenagem data={serie} />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
     </div>
   )
 }

@@ -10,12 +10,12 @@ import { cn } from "@/lib/utils"
 export function MobileNav() {
   const pathname = usePathname()
 
-  const links = [
+const links = [
   { href: "/simulacao", label: "Simulação" },
-  { href: "/cenarios", label: "Cenários" }, 
+  { href: "/cenarios", label: "Cenários" },
   { href: "/modelo-matematico", label: "Modelo Matemático" },
-  { href: "/explicacoes", label: "Explicações" },
 ]
+
 
 
   return (

@@ -1,37 +1,47 @@
 "use client"
 
-import { SimPoint } from "@/lib/simulador"
 import {
-  AreaChart,
-  Area,
+  ResponsiveContainer,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
+  CartesianGrid,
 } from "recharts"
 
-export function ChartAcumuloAgua({ data }: { data: SimPoint[] }) {
-  const chartData = data.map((p) => ({
-    time: `${p.t} h`,
-    A: p.A,
-  }))
-
+export function ChartAcumuloAgua({
+  data,
+  explicito,
+}: {
+  data: any[]
+  explicito?: boolean
+}) {
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <AreaChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="time" />
-        <YAxis />
-        <Tooltip />
-        <Area
-          type="monotone"
-          dataKey="A"
-          stroke="var(--chart-1, #3b82f6)"
-          fill="var(--chart-1, #3b82f6)"
-          fillOpacity={0.2}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
+    <div className="space-y-3">
+      <ResponsiveContainer width="100%" height={260}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="4 4" opacity={0.3} />
+          <XAxis dataKey="t" tickFormatter={v => `${v}h`} />
+          <YAxis />
+          <Tooltip />
+          <Line
+            type="monotone"
+            dataKey="A"
+            stroke="#3b82f6"
+            strokeWidth={3}
+            dot={{ r: 4 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        O acúmulo <strong>A(t)</strong> começa no valor inicial{" "}
+        <strong>A₀</strong> em <strong>t = 0</strong>. Ele passa a crescer a
+        partir de <strong>t = 1</strong>, quando a primeira hora de chuva entra
+        no sistema. Usamos a relação{" "}
+        <strong>A(t) = A(t−1) + max(0, I(t−1) − Dmax)</strong>.
+      </p>
+    </div>
   )
 }

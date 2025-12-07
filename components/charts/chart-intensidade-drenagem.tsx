@@ -1,49 +1,52 @@
 "use client"
 
-import { SimPoint } from "@/lib/simulador"
 import {
+  ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   Legend,
+  CartesianGrid,
 } from "recharts"
 
-export function ChartIntensidadeDrenagem({ data }: { data: SimPoint[] }) {
-  const chartData = data.map((p) => ({
-    time: `${p.t} h`,
-    I: p.I,
-    D: p.D,
-  }))
-
+export function ChartIntensidadeDrenagem({ data }: { data: any[] }) {
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <LineChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="time" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Line
-          type="monotone"
-          dataKey="I"
-          name="Intensidade I(t)"
-          stroke="var(--chart-1, #3b82f6)"
-          strokeWidth={2}
-          dot={false}
-        />
-        <Line
-          type="monotone"
-          dataKey="D"
-          name="Drenagem D(t)"
-          stroke="var(--chart-2, #22c55e)"
-          strokeWidth={2}
-          dot={false}
-        />
-      </LineChart>
-    </ResponsiveContainer>
+    <div className="space-y-3">
+      <ResponsiveContainer width="100%" height={260}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="4 4" opacity={0.3} />
+          <XAxis dataKey="t" tickFormatter={v => `${v}h`} />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+
+          <Line
+            type="monotone"
+            dataKey="I"
+            name="Chuva I(t)"
+            stroke="#0ea5e9"
+            strokeWidth={3}
+          />
+
+          <Line
+            type="monotone"
+            dataKey="D"
+            name="Drenagem Dmax"
+            stroke="#f97316"
+            strokeWidth={3}
+            strokeDasharray="5 5"
+          />
+        </LineChart>
+      </ResponsiveContainer>
+
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        A chuva <strong>I(t)</strong> representa a intensidade aplicada em cada
+        passo, enquanto a drenagem é limitada por um valor constante{" "}
+        <strong>Dmax</strong>. Sempre que I(t) fica acima de Dmax, o excedente
+        contribui para o acúmulo A(t+1).
+      </p>
+    </div>
   )
 }

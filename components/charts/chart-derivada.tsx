@@ -1,35 +1,29 @@
 "use client"
 
-import { SimPoint } from "@/lib/simulador"
 import {
   LineChart,
   Line,
+  CartesianGrid,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts"
 
-export function ChartDerivada({ data }: { data: SimPoint[] }) {
-  const chartData = data.map((p) => ({
-    time: `${p.t} h`,
-    dA: p.dA,
-  }))
-
+export function ChartDerivada({ data }: { data: any[] }) {
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <LineChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="time" />
-        <YAxis />
+    <ResponsiveContainer width="100%" height={320}>
+      <LineChart data={data} margin={{ left: 12, right: 12 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+        <XAxis dataKey="t" stroke="var(--foreground)" />
+        <YAxis stroke="var(--foreground)" />
         <Tooltip />
         <Line
           type="monotone"
           dataKey="dA"
-          stroke="var(--chart-2, #22c55e)"
+          name="A′(t)"
+          stroke="#ef4444"
           strokeWidth={2}
-          dot
         />
       </LineChart>
     </ResponsiveContainer>

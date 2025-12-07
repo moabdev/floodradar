@@ -1,30 +1,66 @@
+// lib/simulador.ts
+
+export type SimulacaoInput = {
+  I: number        // intensidade da chuva (mm/h)
+  D_max: number    // drenagem máxima
+  A_max: number    // capacidade máxima
+  horas: number    // duração
+  A0: number       // acúmulo inicial
+}
+
 export type SimPoint = {
-  t: number         // tempo (horas)
-  A: number         // nível acumulado
-  I: number         // intensidade da chuva
-  D: number         // drenagem
-  dA: number        // derivada / taxa de variação
-  risco: number     // risco percentual
+  tempo: number
+  I: number
+  D_efetiva: number
+  A: number
+  dA: number
+  risco: number
+  A_max: number
 }
 
 /**
- * Modelo simples:
- *  A(t + 1) = A(t) + (I - D)
- *  dA = I - D
- *  risco = clamp( A * 2.4 , 0 , 100 )
+ * Executa a simulação hidrológica passo a passo.
+ * O modelo segue:
+ *
+ *  D_efetiva(t) = min(D_max, A(t−1))    (não se drena mais água do que existe)
+ *  A(t) = A(t−1) + I − D_efetiva
+ *  dA(t) = A(t) − A(t−1)                (derivada discreta)
+ *  risco(t) = 100 * A(t) / A_max
+ *
+ * Tudo com passo de 1 hora.
  */
-export function rodarSimulacao(I: number, D: number, horas: number): SimPoint[] {
-  const result: SimPoint[] = []
-  let A = 10
+export function rodarSimulacaoAvancada(params: SimulacaoInput): SimPoint[] {
+  const { I, D_max, A_max, horas, A0 } = params
+
+  const resultado: SimPoint[] = []
+
+  let A_anterior = A0
 
   for (let t = 0; t <= horas; t++) {
-    const dA = I - D
-    const risco = Math.min(100, Math.max(0, A * 2.4))
+    // drenagem efetiva não pode exceder nem A(t-1) nem D_max
+    const D_efetiva = Math.min(D_max, A_anterior)
 
-    result.push({ t, A, I, D, dA, risco })
+    // acúmulo no passo atual
+    const A_atual = A_anterior + (t === 0 ? 0 : I - D_efetiva)
 
-    A += dA
+    // derivada discreta
+    const dA = t === 0 ? 0 : A_atual - A_anterior
+
+    // risco
+    const risco = Math.max(0, Math.min(100, (A_atual / A_max) * 100))
+
+    resultado.push({
+      tempo: t,
+      I,
+      D_efetiva,
+      A: A_atual,
+      dA,
+      risco,
+      A_max
+    })
+
+    A_anterior = A_atual
   }
 
-  return result
+  return resultado
 }

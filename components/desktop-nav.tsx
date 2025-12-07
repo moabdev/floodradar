@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils"
 export function DesktopNav() {
   const pathname = usePathname()
 
-  const links = [
-    { href: "/simulacao", label: "Simulação" },
-    { href: "/cenarios", label: "Cenários" },
-    { href: "/modelo-matematico", label: "Modelo Matemático" },
-    { href: "/explicacoes", label: "Explicações" },
-  ]
+const links = [
+  { href: "/simulacao", label: "Simulação" },
+  { href: "/cenarios", label: "Cenários" },
+  { href: "/modelo-matematico", label: "Modelo Matemático" },
+]
+  
 
 
   return (

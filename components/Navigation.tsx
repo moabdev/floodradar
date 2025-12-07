@@ -9,11 +9,13 @@ export function Navigation() {
   const pathname = usePathname()
 
   const links = [
-    { href: "/dashboard", label: "Dashboard" },
     { href: "/simulacao", label: "Simulação" },
+    { href: "/cenarios", label: "Cenários" },
     { href: "/modelo-matematico", label: "Modelo Matemático" },
     { href: "/explicacoes", label: "Explicações" },
+    { href: "/mapa", label: "Mapa" },   // novo!
   ]
+
 
   return (
     <div className="flex items-center gap-6">
