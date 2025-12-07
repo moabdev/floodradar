@@ -6,6 +6,8 @@ import { DesktopNav } from "@/components/desktop-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import Image from "next/image"
 
+import { Toaster } from "@/components/ui/sonner"
+
 
 export const metadata: Metadata = {
   title: "FloodRadar",
@@ -83,6 +85,7 @@ export default function RootLayout({
               </div>
             </footer>
           </div>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

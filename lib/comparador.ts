@@ -1,60 +1,3 @@
-// // lib/comparador.ts
-
-// import { SimPointVariavel } from "./simulador-variavel"
-
-// export type ResumoCenario = {
-//   riscoFinal: number
-//   riscoMax: number
-//   acumulacaoFinal: number
-//   alerta: boolean
-// }
-
-// export function analisarCenario(data: SimPointVariavel[]): ResumoCenario {
-//   const riscoFinal = data[data.length - 1].risco
-//   const riscoMax = Math.max(...data.map(p => p.risco))
-//   const acumulacaoFinal = data[data.length - 1].A
-
-//   return {
-//     riscoFinal,
-//     riscoMax,
-//     acumulacaoFinal,
-//     alerta: riscoMax >= 80 // risco extremo
-//   }
-// }
-
-// // Nova estrutura: usa exatamente os campos retornados por analisarCenario()
-// export function compararCenarios(analises: ResumoCenario[]) {
-
-//   // Informações completas por cenário
-//   const cenarios = analises.map((a) => ({
-//     riscoMax: a.riscoMax,
-//     riscoFinal: a.riscoFinal,
-//     acumulacaoFinal: a.acumulacaoFinal,
-//     alerta: a.alerta
-//   }))
-
-//   // Ranking baseado no risco máximo
-//   const ranking = cenarios
-//     .map((c, i) => ({ i, risco: c.riscoMax }))
-//     .sort((a, b) => b.risco - a.risco)
-//     .map((r) => r.i)
-
-//   const maisPerigoso = cenarios[ranking[0]]
-
-//   const diferencas = {
-//     entre1e2: cenarios[ranking[0]].riscoMax - cenarios[ranking[1]].riscoMax
-//   }
-
-//   return {
-//     ranking,
-//     cenarios,
-//     maisPerigoso,
-//     diferencas
-//   }
-// }
-
-// lib/comparador.ts
-
 import { SimPointVariavel } from "./simulador-variavel"
 
 export type ResumoCenario = {
@@ -63,24 +6,22 @@ export type ResumoCenario = {
   acumuloFinal: number
   acumuloMax: number
   drenagemMax: number
+  alerta: boolean
 }
 
+/**
+ * Analisa um único cenário da simulação
+ */
 export function analisarCenario(data: SimPointVariavel[]): ResumoCenario {
-  if (!data.length) {
-    return {
-      riscoFinal: 0,
-      riscoMax: 0,
-      acumuloFinal: 0,
-      acumuloMax: 0,
-      drenagemMax: 0,
-    }
+  if (data.length === 0) {
+    throw new Error("Cenário vazio recebido em analisarCenario()")
   }
 
-  const riscoFinal = data[data.length - 1].risco
+  const riscoFinal = data.at(-1)!.risco
   const riscoMax = Math.max(...data.map(p => p.risco))
-  const acumuloFinal = data[data.length - 1].A
+  const acumuloFinal = data.at(-1)!.A
   const acumuloMax = Math.max(...data.map(p => p.A))
-  const drenagemMax = Math.max(...data.map(p => p.D))
+  const drenagemMax = Math.max(...data.map(p => p.D_efetiva))
 
   return {
     riscoFinal,
@@ -88,13 +29,24 @@ export function analisarCenario(data: SimPointVariavel[]): ResumoCenario {
     acumuloFinal,
     acumuloMax,
     drenagemMax,
+    alerta: riscoMax >= 80,
   }
 }
 
+/**
+ * Compara vários cenários analisados
+ */
 export function compararCenarios(analises: ResumoCenario[]) {
-  const cenarios = analises
+  if (analises.length < 2) {
+    throw new Error("É necessário ao menos dois cenários para comparar.")
+  }
 
-  // Ranking por risco máximo (maior = pior)
+  const cenarios = analises.map(a => ({
+    riscoMax: a.riscoMax,
+    acumuloMax: a.acumuloMax,
+    drenagemMax: a.drenagemMax,
+  }))
+
   const ranking = cenarios
     .map((c, i) => ({ i, risco: c.riscoMax }))
     .sort((a, b) => b.risco - a.risco)
@@ -104,9 +56,7 @@ export function compararCenarios(analises: ResumoCenario[]) {
 
   const diferencas = {
     entre1e2:
-      ranking.length > 1
-        ? cenarios[ranking[0]].riscoMax - cenarios[ranking[1]].riscoMax
-        : 0,
+      cenarios[ranking[0]].riscoMax - cenarios[ranking[1]].riscoMax,
   }
 
   return {

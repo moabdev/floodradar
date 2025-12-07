@@ -23,10 +23,15 @@ import { ChartIntensidadeDrenagem } from "@/components/charts/chart-intensidade-
 import { ChartAcumuloAgua } from "@/components/charts/chart-acumulo"
 import { ChartDerivada } from "@/components/charts/chart-derivada"
 import { ChartRisco } from "@/components/charts/chart-risco"
+
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Latex } from "@/components/latex/Latex"
+import { toast } from "sonner"
 
+/* ======================================================================================
+   PÁGINA PRINCIPAL
+====================================================================================== */
 
 export default function SimulacaoVariavelPage() {
   const [horas, setHoras] = useState(6)
@@ -38,10 +43,9 @@ export default function SimulacaoVariavelPage() {
 
   const [dados, setDados] = useState<SimPointVariavel[] | null>(null)
 
-  // Atualizar número de horas → cria / remove campos de chuva
   function atualizarHoras(n: number) {
     setHoras(n)
-    setChuva((prev) => {
+    setChuva(prev => {
       const novo = [...prev]
       while (novo.length < n) novo.push("0")
       while (novo.length > n) novo.pop()
@@ -49,16 +53,37 @@ export default function SimulacaoVariavelPage() {
     })
   }
 
-  // RODAR SIMULAÇÃO
+  function toastRisco(riscoFinal: number) {
+    if (riscoFinal >= 70) {
+      toast("Risco Alto 🌧️", {
+        description: `O risco atingiu ${riscoFinal.toFixed(0)}%. Atenção máxima!`,
+        className: "bg-red-600 text-white shadow-red-400",
+      })
+    } else if (riscoFinal >= 40) {
+      toast("Risco Moderado 🌦️", {
+        description: `Risco atual: ${riscoFinal.toFixed(0)}%. Mantenha atenção.`,
+        className: "bg-yellow-500 text-black shadow-yellow-300",
+      })
+    } else {
+      toast("Risco Baixo 🌿", {
+        description: `Risco atual: ${riscoFinal.toFixed(0)}%. Sistema estável.`,
+        className: "bg-green-600 text-white shadow-green-400",
+      })
+    }
+  }
+
   function handleSimular() {
-    const chuvaNumerica = chuva.map(Number)
+    const chuvaNum = chuva.map(Number)
 
     const sim = rodarSimulacaoAvancadaVariavel({
-      chuva: chuvaNumerica,
+      chuva: chuvaNum,
       D_max: Dmax,
       A_max: Amax,
       A0,
     })
+
+    const riscoFinal = sim.at(-1)!.risco
+    toastRisco(riscoFinal)
 
     setDados(sim)
   }
@@ -88,15 +113,15 @@ export default function SimulacaoVariavelPage() {
 
         <CardContent className="space-y-6">
 
-          {/* Linha de parâmetros principais */}
+          {/* PARÂMETROS PRINCIPAIS */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-            <Param label="Drenagem Dₘₐₓ (mm/h)" value={Dmax} set={setDmax} />
-            <Param label="Capacidade Aₘₐₓ (mm)" value={Amax} set={setAmax} />
-            <Param label="Acúmulo inicial A₀ (mm)" value={A0} set={setA0} />
-            <Param label="Duração (h)" value={horas} set={n => atualizarHoras(n)} min={1} />
+            <Param label="Drenagem Dₘₐₓ (mm/h)" value={Dmax} setValue={setDmax} />
+            <Param label="Capacidade Aₘₐₓ (mm)" value={Amax} setValue={setAmax} />
+            <Param label="Acúmulo inicial A₀ (mm)" value={A0} setValue={setA0} />
+            <Param label="Duração (h)" value={horas} min={1} setValue={v => atualizarHoras(Number(v))} />
           </div>
 
-          {/* Campos dinâmicos de chuva */}
+          {/* CHUVA HORA-A-HORA */}
           <div className="space-y-2">
             <Label>Chuva hora a hora (mm)</Label>
 
@@ -116,7 +141,16 @@ export default function SimulacaoVariavelPage() {
             </div>
           </div>
 
-          <Button className="w-full py-4 text-lg" onClick={handleSimular}>
+          {/* BOTÃO */}
+          <Button
+            onClick={handleSimular}
+            className={cn(
+              "w-full py-4 text-lg font-semibold tracking-wide rounded-xl",
+              "transition-all duration-300 bg-gradient-to-r from-blue-600 to-blue-500",
+              "hover:from-blue-500 hover:to-blue-400 hover:shadow-lg hover:shadow-blue-500/20",
+              "active:scale-95 active:shadow-inner text-white shadow-md"
+            )}
+          >
             Rodar Simulação
           </Button>
         </CardContent>
@@ -127,7 +161,7 @@ export default function SimulacaoVariavelPage() {
         <>
           <Separator />
 
-          {/* KPIs */}
+          {/* KPIS */}
           <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <Kpi title="Nível final" value={`${ultimo.A.toFixed(1)} mm`} />
             <Kpi title="Derivada final" value={`${ultimo.dA.toFixed(1)} mm/h`} />
@@ -136,68 +170,98 @@ export default function SimulacaoVariavelPage() {
 
           <Separator />
 
-          {/* ABAS DOS GRÁFICOS */}
+          {/* TABS — PADRÃO SHADCN SEM BUG DE ALTURA */}
           <Tabs defaultValue="acumulo" className="w-full">
-            <TabsList className="w-full flex-wrap justify-center gap-2">
-              <TabButton value="acumulo" label="A(t)" />
-              <TabButton value="derivada" label="A′(t)" />
-              <TabButton value="intD" label="I × D" />
-              <TabButton value="risco" label="Risco" />
-              <TabButton value="radar" label="Radar" />
+
+            <TabsList className="w-full justify-center gap-4">
+              <TabsTrigger value="acumulo">A(t)</TabsTrigger>
+              <TabsTrigger value="derivada">A′(t)</TabsTrigger>
+              <TabsTrigger value="intD">I × D</TabsTrigger>
+              <TabsTrigger value="risco">Risco</TabsTrigger>
             </TabsList>
 
             {/* A(t) */}
-            <ChartTab value="acumulo" title="Acúmulo de Água A(t)">
-              <ChartAcumuloAgua data={dados.map((p) => ({ t: p.t, A: p.A }))} />
-              <Explainer>
-                <Latex value={"A(t) = A(t-1) + \\max(0, I(t) - D_{max})"} />
-              </Explainer>
-            </ChartTab>
+            <TabsContent value="acumulo">
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Acúmulo de Água A(t)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <ChartAcumuloAgua data={dados.map(p => ({ t: p.t, A: p.A }))} />
+                    <Explainer>
+                      <Latex value={"A(t) = A(t-1) + \\max(0, I(t) - D_{max})"} />
+                    </Explainer>
+                  </motion.div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Derivada */}
-            <ChartTab value="derivada" title="Derivada A′(t)">
-              <ChartDerivada data={dados.map((p) => ({ t: p.t, dA: p.dA }))} />
-              <Explainer>
-                <Latex value={"A'(t) = A(t) - A(t-1)"} />
-              </Explainer>
-            </ChartTab>
+            <TabsContent value="derivada">
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Derivada A′(t)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <ChartDerivada data={dados.map(p => ({ t: p.t, dA: p.dA }))} />
+                    <Explainer>
+                      <Latex value={"A'(t) = A(t) - A(t-1)"} />
+                    </Explainer>
+                  </motion.div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Entrada vs Drenagem */}
-            <ChartTab value="intD" title="Entrada vs Drenagem">
-              <ChartIntensidadeDrenagem
-                data={dados.map((p) => ({
-                  t: p.t,
-                  I: p.I,
-                  D: p.D_efetiva,
-                }))}
-              />
-            </ChartTab>
+            <TabsContent value="intD">
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Entrada vs Drenagem</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <ChartIntensidadeDrenagem data={dados.map(p => ({ t: p.t, I: p.I, D: p.D_efetiva }))} />
+                  </motion.div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Risco */}
-            <ChartTab value="risco" title="Risco ao longo do tempo">
-              <ChartRisco data={dados.map((p) => ({ t: p.t, risco: p.risco }))} />
-              <Explainer>
-                <Latex value={"R(t) = 100 \\cdot \\frac{A(t)}{A_{max}}"} />
-              </Explainer>
-            </ChartTab>
+            <TabsContent value="risco">
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Risco ao longo do tempo</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <ChartRisco data={dados.map(p => ({ t: p.t, risco: p.risco }))} />
+                    <Explainer>
+                      <Latex value={"R(t) = 100 \\cdot \\frac{A(t)}{A_{max}}"} />
+                    </Explainer>
+                  </motion.div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
           </Tabs>
         </>
       )}
+
     </div>
   )
 }
 
-
-/* -----------------------------------
+/* ======================================================================================
    COMPONENTES AUXILIARES
------------------------------------- */
+====================================================================================== */
 
-function Param({ label, value, set, explanation, min }: any) {
+function Param({ label, value, setValue, min }: any) {
   return (
     <div className="space-y-1">
       <Label>{label}</Label>
-      <Input type="number" value={value} min={min} onChange={(e) => set(Number(e.target.value))} />
-      {explanation && <p className="text-xs text-muted-foreground">{explanation}</p>}
+      <Input type="number" min={min} value={value} onChange={e => setValue(Number(e.target.value))} />
     </div>
   )
 }
@@ -215,45 +279,9 @@ function Kpi({ title, value, highlight }: any) {
   )
 }
 
-function TabButton({ value, label }: any) {
-  return (
-    <TabsTrigger
-      value={value}
-      className={cn(
-        "px-4 py-2 rounded-lg text-sm font-medium",
-        "data-[state=active]:bg-blue-600 data-[state=active]:text-white",
-        "data-[state=inactive]:bg-blue-100 data-[state=inactive]:text-blue-700",
-        "transition-all hover:scale-105"
-      )}
-    >
-      {label}
-    </TabsTrigger>
-  )
-}
-
-function ChartTab({ value, title, children }: any) {
-  return (
-    <TabsContent value={value}>
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        className="mt-6"
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>{title}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">{children}</CardContent>
-        </Card>
-      </motion.div>
-    </TabsContent>
-  )
-}
-
 function Explainer({ children }: any) {
   return (
-    <div className="p-4 bg-slate-650 border border-white-200 rounded-lg text-sm space-y-2">
+    <div className="p-4 bg-slate-700/30 rounded-lg border border-slate-600 text-sm space-y-2">
       {children}
     </div>
   )

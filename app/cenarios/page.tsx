@@ -10,6 +10,7 @@ import {
   rodarSimulacaoAvancadaVariavel,
   SimPointVariavel,
 } from "@/lib/simulador-variavel"
+
 import { analisarCenario, compararCenarios } from "@/lib/comparador"
 
 import { ChartAcumuloAgua } from "@/components/charts/chart-acumulo"
@@ -19,6 +20,7 @@ import { ChartIntensidadeDrenagem } from "@/components/charts/chart-intensidade-
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 export default function CenariosPage() {
   const [horas, setHoras] = useState(5)
@@ -60,6 +62,11 @@ export default function CenariosPage() {
       }),
     )
 
+    toast("Simulação concluída ✔️", {
+      description: "Os gráficos foram atualizados com os novos parâmetros.",
+      duration: 3500,
+    })
+
     setDados(series)
 
     const analises = series.map(analisarCenario)
@@ -70,54 +77,31 @@ export default function CenariosPage() {
 
   return (
     <div className="space-y-16 pb-20">
-      <h1 className="text-4xl font-bold tracking-tight">
-        Cenários de Chuva Variável
-      </h1>
+      <h1 className="text-4xl font-bold tracking-tight">Cenários de Chuva Variável</h1>
 
-      {/* PARÂMETROS GERAIS */}
+      {/* PARÂMETROS */}
       <Card>
         <CardHeader>
           <CardTitle>Parâmetros dos Cenários</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-6">
+
+          {/* Linha de parâmetros gerais */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="space-y-3">
-              <Label>Duração (horas)</Label>
-              <Input
-                type="number"
-                min={1}
-                value={horas}
-                onChange={e => atualizarHoras(Number(e.target.value))}
-              />
-            </div>
+            <Param label="Duração (horas)" value={horas} setValue={n => atualizarHoras(Number(n))} />
 
-            <div className="space-y-3">
-              <Label>Amax</Label>
-              <Input
-                type="number"
-                value={Amax}
-                onChange={e => setAmax(Number(e.target.value))}
-              />
-            </div>
-
-            <div className="space-y-3">
-              <Label>A0</Label>
-              <Input
-                type="number"
-                value={A0}
-                onChange={e => setA0(Number(e.target.value))}
-              />
-            </div>
+            <Param label="Amax" value={Amax} setValue={setAmax} />
+            <Param label="A0" value={A0} setValue={setA0} />
           </div>
 
-          {/* PARÂMETROS POR CENÁRIO */}
+          {/* PARÂMETROS DE CADA CENÁRIO */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {chuva.map((cenario, i) => (
-              <div key={i} className="border rounded-lg p-4 space-y-3">
+              <Card key={i} className="p-4 space-y-3 border">
                 <h2 className="font-semibold">Cenário {i + 1}</h2>
 
-                <Label>Chuva I(t) hora a hora</Label>
+                <Label>Chuva I(t)</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                   {cenario.map((v, h) => (
                     <Input
@@ -143,103 +127,80 @@ export default function CenariosPage() {
                     setDmax(arr)
                   }}
                 />
-              </div>
+              </Card>
             ))}
           </div>
 
-          <Button className="w-full py-5 text-lg" onClick={simular}>
+          {/* BOTÃO */}
+          <Button
+            onClick={simular}
+            className={cn(
+              "w-full py-4 text-lg font-semibold tracking-wide",
+              "rounded-xl transition-all duration-300",
+              "bg-gradient-to-r from-blue-600 to-blue-500",
+              "hover:from-blue-500 hover:to-blue-400",
+              "hover:shadow-lg hover:shadow-blue-500/20",
+              "active:scale-95 active:shadow-inner",
+              "text-white shadow-md"
+            )}
+          >
             Rodar Cenários
           </Button>
         </CardContent>
       </Card>
 
-      {/* RELATÓRIO GERAL */}
+      {/* RELATÓRIO */}
       {resumo && (
         <Card>
           <CardHeader>
             <CardTitle>Relatório de Comparação</CardTitle>
           </CardHeader>
-
           <CardContent className="text-lg space-y-3">
-            <p>
-              🔥 Cenário mais perigoso:
-              <strong> Cenário {resumo.ranking[0] + 1}</strong>
-            </p>
+            <p>🔥 Cenário mais perigoso: <strong>{resumo.ranking[0] + 1}</strong></p>
 
-            <p>
-              🌧️ Maior risco registrado:
-              <strong> {resumo.maisPerigoso.riscoMax.toFixed(1)}%</strong>
-            </p>
+            <p>🌧️ Maior risco registrado: <strong>{resumo.maisPerigoso.riscoMax.toFixed(1)}%</strong></p>
 
-            <p>
-              📊 Diferença entre os dois piores:
-              <strong> {resumo.diferencas.entre1e2.toFixed(1)}%</strong>
-            </p>
+            <p>📊 Diferença entre os dois piores: <strong>{resumo.diferencas.entre1e2.toFixed(1)}%</strong></p>
           </CardContent>
         </Card>
       )}
 
-      {/* ABAS DOS CENÁRIOS */}
+      {/* TABS — versão oficial shadcn, SEM BUG DE ALTURA */}
       {dados.length > 0 && (
         <Tabs defaultValue="0" className="w-full">
-          <TabsList className="w-full flex justify-center gap-2 bg-transparent">
-            {dados.map((_, i) => {
-              const icone = i === 0 ? "🌧️" : i === 1 ? "⚠️" : "💧"
 
-              return (
-                <TabsTrigger
-                  key={i}
-                  value={String(i)}
-                  className={cn(
-                    "px-6 py-3 text-lg font-medium rounded-xl transition-all",
-                    "data-[state=active]:bg-blue-600 data-[state=active]:text-white",
-                    "data-[state=inactive]:bg-blue-100 data-[state=inactive]:text-blue-700",
-                    "hover:scale-105 hover:shadow-md",
-                  )}
-                >
-                  {icone} Cenário {i + 1}
-                </TabsTrigger>
-              )
-            })}
+          <TabsList className="w-full flex justify-center gap-4">
+            {dados.map((_, i) => (
+              <TabsTrigger key={i} value={String(i)}>
+                Cenário {i + 1}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           {dados.map((serie, i) => (
             <TabsContent key={i} value={String(i)}>
-              <motion.div
-                className="w-full"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card className="w-full mt-6 shadow-lg rounded-xl">
-                  <CardHeader>
-                    <CardTitle className="text-2xl flex items-center gap-2">
-                      {i === 0 && "🌧️"}
-                      {i === 1 && "⚠️"}
-                      {i === 2 && "💧"}
-                      Cenário {i + 1}
-                    </CardTitle>
-                  </CardHeader>
+              <Card className="mt-6 shadow-xl rounded-xl">
+                <CardHeader>
+                  <CardTitle>Cenário {i + 1}</CardTitle>
+                </CardHeader>
 
-                  <CardContent className="space-y-6">
-                    {/* RESUMO INDIVIDUAL */}
+                <CardContent className="space-y-6">
+
+                  {/* ANIMAÇÃO INTERNA — CORRETO */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-6"
+                  >
+
+                    {/* RESUMO */}
                     {resumo?.cenarios[i] && (
-                      <div className="p-4 bg-slate-650 rounded-lg border border-blue-200">
-                        <h3 className="text-xl font-semibold mb-2">
-                          Resumo do Cenário
-                        </h3>
-                        <p>
-                          <strong>Risco Máximo:</strong>{" "}
-                          {resumo.cenarios[i].riscoMax.toFixed(1)}%
-                        </p>
-                        <p>
-                          <strong>Acúmulo Máximo:</strong>{" "}
-                          {resumo.cenarios[i].acumuloMax.toFixed(1)} mm
-                        </p>
-                        <p>
-                          <strong>Drenagem Máx.:</strong>{" "}
-                          {resumo.cenarios[i].drenagemMax.toFixed(1)} mm/h
-                        </p>
+                      <div className="p-4 bg-slate-700/30 rounded-lg border border-slate-600">
+                        <h3 className="text-xl font-semibold mb-2">Resumo do Cenário</h3>
+                        <p><strong>Risco Máximo:</strong> {resumo.cenarios[i].riscoMax.toFixed(1)}%</p>
+                        <p><strong>Acúmulo Máximo:</strong> {resumo.cenarios[i].acumuloMax.toFixed(1)} mm</p>
+                        <p><strong>Drenagem Máx.:</strong> {resumo.cenarios[i].drenagemMax.toFixed(1)} mm/h</p>
                       </div>
                     )}
 
@@ -247,13 +208,36 @@ export default function CenariosPage() {
                     <ChartAcumuloAgua data={serie} />
                     <ChartRisco data={serie} />
                     <ChartIntensidadeDrenagem data={serie} />
-                  </CardContent>
-                </Card>
-              </motion.div>
+
+                  </motion.div>
+                </CardContent>
+              </Card>
             </TabsContent>
           ))}
+
         </Tabs>
       )}
+    </div>
+  )
+}
+
+/* ============================================
+   COMPONENTES AUXILIARES
+============================================ */
+
+function Param({ label, value, setValue }: {
+  label: string
+  value: number
+  setValue: (v: number) => void
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Input
+        type="number"
+        value={value}
+        onChange={e => setValue(Number(e.target.value))}
+      />
     </div>
   )
 }
