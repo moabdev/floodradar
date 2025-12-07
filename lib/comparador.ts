@@ -36,33 +36,64 @@ export function analisarCenario(data: SimPointVariavel[]): ResumoCenario {
 /**
  * Compara vários cenários analisados
  */
+// export function compararCenarios(analises: ResumoCenario[]) {
+//   if (analises.length < 2) {
+//     throw new Error("É necessário ao menos dois cenários para comparar.")
+//   }
+
+//   const cenarios = analises.map(a => ({
+//     riscoMax: a.riscoMax,
+//     acumuloMax: a.acumuloMax,
+//     drenagemMax: a.drenagemMax,
+//   }))
+
+//   const ranking = cenarios
+//     .map((c, i) => ({ i, risco: c.riscoMax }))
+//     .sort((a, b) => b.risco - a.risco)
+//     .map(r => r.i)
+
+//   const maisPerigoso = cenarios[ranking[0]]
+
+//   const diferencas = {
+//     entre1e2:
+//       cenarios[ranking[0]].riscoMax - cenarios[ranking[1]].riscoMax,
+//   }
+
+//   return {
+//     ranking,
+//     maisPerigoso,
+//     diferencas,
+//     cenarios,
+//   }
+// }
+
+
+/**
+ * Recebe um array de ResumoCenario completo e retorna:
+ * - ranking
+ * - maisPerigoso (ResumoCenario completo)
+ * - diferenças
+ * - cenários (ResumoCenario[])
+ */
 export function compararCenarios(analises: ResumoCenario[]) {
-  if (analises.length < 2) {
-    throw new Error("É necessário ao menos dois cenários para comparar.")
-  }
-
-  const cenarios = analises.map(a => ({
-    riscoMax: a.riscoMax,
-    acumuloMax: a.acumuloMax,
-    drenagemMax: a.drenagemMax,
-  }))
-
-  const ranking = cenarios
+  // ranking baseado no risco máximo
+  const ranking = analises
     .map((c, i) => ({ i, risco: c.riscoMax }))
     .sort((a, b) => b.risco - a.risco)
     .map(r => r.i)
 
-  const maisPerigoso = cenarios[ranking[0]]
+  const maisPerigoso = analises[ranking[0]]
 
   const diferencas = {
     entre1e2:
-      cenarios[ranking[0]].riscoMax - cenarios[ranking[1]].riscoMax,
+      analises[ranking[0]].riscoMax -
+      analises[ranking[1]].riscoMax
   }
 
   return {
     ranking,
     maisPerigoso,
     diferencas,
-    cenarios,
+    cenarios: analises
   }
 }

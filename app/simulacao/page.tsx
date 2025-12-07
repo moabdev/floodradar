@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Card,
   CardHeader,
@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator"
 
 import {
   rodarSimulacaoAvancadaVariavel,
-  SimPointVariavel
+  SimPointVariavel,
 } from "@/lib/simulador-variavel"
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -28,7 +28,6 @@ import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Latex } from "@/components/latex/Latex"
 import { toast } from "sonner"
-
 
 // -------------------------------------------
 // TIPAGEM DOS COMPONENTES INTERNOS
@@ -51,7 +50,6 @@ type KpiProps = {
 type TabButtonProps = {
   value: string
   label: string
-  icon?: string
 }
 
 type ChartTabProps = {
@@ -64,6 +62,11 @@ type ExplainerProps = {
   children: React.ReactNode
 }
 
+// Helper para limpar texto numérico (0–9, . ,)
+const NUMERIC_REGEX = /[^0-9.,]/g
+function sanitizeNumericString(value: string): string {
+  return value.replace(NUMERIC_REGEX, "")
+}
 
 // -------------------------------------------
 // PÁGINA PRINCIPAL
@@ -92,29 +95,33 @@ export default function SimulacaoVariavelPage() {
     })
   }
 
-  // Toast baseado no risco
+  // Toast baseado no risco final
   function toastRisco(riscoFinal: number) {
     if (riscoFinal >= 70) {
       toast("Risco Alto 🌧️", {
         description: `O risco atingiu ${riscoFinal.toFixed(0)}%. Atenção máxima!`,
-        className: "bg-red-600 text-white shadow-red-400"
+        className: "bg-red-600 text-white shadow-red-400",
       })
     } else if (riscoFinal >= 40) {
       toast("Risco Moderado 🌦️", {
         description: `Risco atual: ${riscoFinal.toFixed(0)}%. Mantenha atenção.`,
-        className: "bg-yellow-500 text-black shadow-yellow-300"
+        className: "bg-yellow-500 text-black shadow-yellow-300",
       })
     } else {
       toast("Risco Baixo 🌿", {
         description: `Risco atual: ${riscoFinal.toFixed(0)}%. Sistema estável.`,
-        className: "bg-green-600 text-white shadow-green-400"
+        className: "bg-green-600 text-white shadow-green-400",
       })
     }
   }
 
   // Rodar simulação
   function handleSimular() {
-    const chuvaNumerica = chuva.map(Number)
+    const chuvaNumerica = chuva.map(v => {
+      const normalized = v.replace(",", ".")
+      const num = parseFloat(normalized)
+      return Number.isFinite(num) ? num : 0
+    })
 
     const sim = rodarSimulacaoAvancadaVariavel({
       chuva: chuvaNumerica,
@@ -133,7 +140,6 @@ export default function SimulacaoVariavelPage() {
 
   return (
     <div className="space-y-16 pb-20">
-
       {/* TÍTULO */}
       <section className="space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">
@@ -153,7 +159,6 @@ export default function SimulacaoVariavelPage() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-
           {/* Parâmetros principais */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
             <Param label="Drenagem Dₘₐₓ (mm/h)" value={Dmax} setValue={setDmax} />
@@ -175,11 +180,13 @@ export default function SimulacaoVariavelPage() {
               {chuva.map((valor, i) => (
                 <Input
                   key={i}
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   value={valor}
                   onChange={(e) => {
+                    const clean = sanitizeNumericString(e.target.value)
                     const novo = [...chuva]
-                    novo[i] = e.target.value
+                    novo[i] = clean
                     setChuva(novo)
                   }}
                 />
@@ -191,14 +198,13 @@ export default function SimulacaoVariavelPage() {
             onClick={handleSimular}
             className={cn(
               "w-full py-4 text-lg font-semibold tracking-wide rounded-xl",
-              "transition-all duration-300 bg-gradient-to-r from-blue-600 to-blue-500",
+              "transition-all duration-300 bg-linear-to-r from-blue-600 to-blue-500",
               "hover:from-blue-500 hover:to-blue-400 hover:shadow-lg hover:shadow-blue-500/20",
-              "active:scale-95 active:shadow-inner text-white shadow-md"
+              "active:scale-95 active:shadow-inner text-white shadow-md",
             )}
           >
             Rodar Simulação
           </Button>
-
         </CardContent>
       </Card>
 
@@ -211,14 +217,17 @@ export default function SimulacaoVariavelPage() {
           <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <Kpi title="Nível final" value={`${ultimo.A.toFixed(1)} mm`} />
             <Kpi title="Derivada final" value={`${ultimo.dA.toFixed(1)} mm/h`} />
-            <Kpi title="Risco final" value={`${ultimo.risco.toFixed(0)} %`} highlight={ultimo.risco >= 70} />
+            <Kpi
+              title="Risco final"
+              value={`${ultimo.risco.toFixed(0)} %`}
+              highlight={ultimo.risco >= 70}
+            />
           </section>
 
           <Separator />
 
           {/* ABAS */}
           <Tabs defaultValue="acumulo" className="w-full">
-
             <TabsList className="flex w-full justify-center gap-4 flex-wrap">
               <TabButton value="acumulo" label="A(t)" />
               <TabButton value="derivada" label="A′(t)" />
@@ -256,29 +265,53 @@ export default function SimulacaoVariavelPage() {
                 <Latex value={"R(t) = 100 \\cdot \\frac{A(t)}{A_{max}}"} />
               </Explainer>
             </ChartTab>
-
           </Tabs>
         </>
       )}
-
     </div>
   )
 }
-
 
 // -------------------------------------------
 // COMPONENTES AUXILIARES TIPADOS
 // -------------------------------------------
 
 function Param({ label, value, min, explanation, setValue }: ParamProps) {
+  const [input, setInput] = useState<string>(String(value))
+
+  // sincroniza quando o value externo mudar (ex: reset)
+  useEffect(() => {
+    setInput(String(value))
+  }, [value])
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value
+    const clean = sanitizeNumericString(raw)
+    setInput(clean)
+
+    if (clean === "") {
+      return
+    }
+
+    const normalized = clean.replace(",", ".")
+    const parsed = parseFloat(normalized)
+    if (!Number.isNaN(parsed)) {
+      if (min !== undefined && parsed < min) {
+        setValue(min)
+      } else {
+        setValue(parsed)
+      }
+    }
+  }
+
   return (
     <div className="space-y-1">
       <Label>{label}</Label>
       <Input
-        type="number"
-        value={value}
-        min={min}
-        onChange={(e) => setValue(Number(e.target.value))}
+        type="text"
+        inputMode="decimal"
+        value={input}
+        onChange={handleChange}
       />
       {explanation && (
         <p className="text-xs text-muted-foreground">{explanation}</p>
@@ -312,7 +345,7 @@ function TabButton({ value, label }: TabButtonProps) {
         "px-5 py-2 rounded-lg text-sm font-semibold",
         "bg-slate-800/40 border border-slate-700/40",
         "data-[state=active]:bg-blue-600 data-[state=active]:text-white",
-        "transition-all duration-200"
+        "transition-all duration-200",
       )}
     >
       {label}
@@ -333,9 +366,7 @@ function ChartTab({ value, title, children }: ChartTabProps) {
           <CardHeader>
             <CardTitle>{title}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {children}
-          </CardContent>
+          <CardContent className="space-y-6">{children}</CardContent>
         </Card>
       </motion.div>
     </TabsContent>
