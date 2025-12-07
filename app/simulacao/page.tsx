@@ -29,9 +29,12 @@ import { cn } from "@/lib/utils"
 import { Latex } from "@/components/latex/Latex"
 import { toast } from "sonner"
 
-/* ======================================================================================
-   PÁGINA PRINCIPAL
-====================================================================================== */
+type ParamProps = {
+  label: string
+  value: number
+  min?: number
+  setValue: (value: number) => void
+}
 
 export default function SimulacaoVariavelPage() {
   const [horas, setHoras] = useState(6)
@@ -257,7 +260,7 @@ export default function SimulacaoVariavelPage() {
    COMPONENTES AUXILIARES
 ====================================================================================== */
 
-function Param({ label, value, setValue, min }: any) {
+function Param({ label, value, setValue, min }: ParamProps) {
   return (
     <div className="space-y-1">
       <Label>{label}</Label>
