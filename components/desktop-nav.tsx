@@ -4,17 +4,10 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
+import { links } from "@/data"
 
 export function DesktopNav() {
   const pathname = usePathname()
-
-const links = [
-  { href: "/simulacao", label: "Simulação" },
-  { href: "/cenarios", label: "Cenários" },
-  { href: "/modelo-matematico", label: "Modelo Matemático" },
-]
-  
-
 
   return (
     <div className="flex items-center gap-6">
