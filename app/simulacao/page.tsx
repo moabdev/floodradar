@@ -29,63 +29,101 @@ import { cn } from "@/lib/utils"
 import { Latex } from "@/components/latex/Latex"
 import { toast } from "sonner"
 
+
+// -------------------------------------------
+// TIPAGEM DOS COMPONENTES INTERNOS
+// -------------------------------------------
+
 type ParamProps = {
   label: string
   value: number
   min?: number
+  explanation?: string
   setValue: (value: number) => void
 }
 
+type KpiProps = {
+  title: string
+  value: string
+  highlight?: boolean
+}
+
+type TabButtonProps = {
+  value: string
+  label: string
+  icon?: string
+}
+
+type ChartTabProps = {
+  value: string
+  title: string
+  children: React.ReactNode
+}
+
+type ExplainerProps = {
+  children: React.ReactNode
+}
+
+
+// -------------------------------------------
+// PÁGINA PRINCIPAL
+// -------------------------------------------
+
 export default function SimulacaoVariavelPage() {
-  const [horas, setHoras] = useState(6)
+  const [horas, setHoras] = useState<number>(6)
   const [chuva, setChuva] = useState<string[]>(Array(6).fill("0"))
 
-  const [Dmax, setDmax] = useState(15)
-  const [Amax, setAmax] = useState(120)
-  const [A0, setA0] = useState(0)
+  const [Dmax, setDmax] = useState<number>(15)
+  const [Amax, setAmax] = useState<number>(120)
+  const [A0, setA0] = useState<number>(0)
 
   const [dados, setDados] = useState<SimPointVariavel[] | null>(null)
 
+  // Atualizar nº de horas cria/remove inputs
   function atualizarHoras(n: number) {
+    if (n <= 0 || !Number.isFinite(n)) return
+
     setHoras(n)
     setChuva(prev => {
-      const novo = [...prev]
-      while (novo.length < n) novo.push("0")
-      while (novo.length > n) novo.pop()
-      return novo
+      const arr = [...prev]
+      while (arr.length < n) arr.push("0")
+      while (arr.length > n) arr.pop()
+      return arr
     })
   }
 
+  // Toast baseado no risco
   function toastRisco(riscoFinal: number) {
     if (riscoFinal >= 70) {
       toast("Risco Alto 🌧️", {
         description: `O risco atingiu ${riscoFinal.toFixed(0)}%. Atenção máxima!`,
-        className: "bg-red-600 text-white shadow-red-400",
+        className: "bg-red-600 text-white shadow-red-400"
       })
     } else if (riscoFinal >= 40) {
       toast("Risco Moderado 🌦️", {
         description: `Risco atual: ${riscoFinal.toFixed(0)}%. Mantenha atenção.`,
-        className: "bg-yellow-500 text-black shadow-yellow-300",
+        className: "bg-yellow-500 text-black shadow-yellow-300"
       })
     } else {
       toast("Risco Baixo 🌿", {
         description: `Risco atual: ${riscoFinal.toFixed(0)}%. Sistema estável.`,
-        className: "bg-green-600 text-white shadow-green-400",
+        className: "bg-green-600 text-white shadow-green-400"
       })
     }
   }
 
+  // Rodar simulação
   function handleSimular() {
-    const chuvaNum = chuva.map(Number)
+    const chuvaNumerica = chuva.map(Number)
 
     const sim = rodarSimulacaoAvancadaVariavel({
-      chuva: chuvaNum,
+      chuva: chuvaNumerica,
       D_max: Dmax,
       A_max: Amax,
       A0,
     })
 
-    const riscoFinal = sim.at(-1)!.risco
+    const riscoFinal = sim.at(-1)?.risco ?? 0
     toastRisco(riscoFinal)
 
     setDados(sim)
@@ -108,7 +146,7 @@ export default function SimulacaoVariavelPage() {
         </p>
       </section>
 
-      {/* PARÂMETROS */}
+      {/* PAINEL DE PARÂMETROS */}
       <Card>
         <CardHeader>
           <CardTitle>Configuração da Simulação</CardTitle>
@@ -116,15 +154,20 @@ export default function SimulacaoVariavelPage() {
 
         <CardContent className="space-y-6">
 
-          {/* PARÂMETROS PRINCIPAIS */}
+          {/* Parâmetros principais */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
             <Param label="Drenagem Dₘₐₓ (mm/h)" value={Dmax} setValue={setDmax} />
             <Param label="Capacidade Aₘₐₓ (mm)" value={Amax} setValue={setAmax} />
             <Param label="Acúmulo inicial A₀ (mm)" value={A0} setValue={setA0} />
-            <Param label="Duração (h)" value={horas} min={1} setValue={v => atualizarHoras(Number(v))} />
+            <Param
+              label="Duração (h)"
+              value={horas}
+              min={1}
+              setValue={(v) => atualizarHoras(v)}
+            />
           </div>
 
-          {/* CHUVA HORA-A-HORA */}
+          {/* Campos dinâmicos de chuva */}
           <div className="space-y-2">
             <Label>Chuva hora a hora (mm)</Label>
 
@@ -144,7 +187,6 @@ export default function SimulacaoVariavelPage() {
             </div>
           </div>
 
-          {/* BOTÃO */}
           <Button
             onClick={handleSimular}
             className={cn(
@@ -156,15 +198,16 @@ export default function SimulacaoVariavelPage() {
           >
             Rodar Simulação
           </Button>
+
         </CardContent>
       </Card>
 
-      {/* RESULTADOS */}
+      {/* RESULTADOS COM GRÁFICOS */}
       {dados && ultimo && (
         <>
           <Separator />
 
-          {/* KPIS */}
+          {/* KPIs */}
           <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <Kpi title="Nível final" value={`${ultimo.A.toFixed(1)} mm`} />
             <Kpi title="Derivada final" value={`${ultimo.dA.toFixed(1)} mm/h`} />
@@ -173,80 +216,46 @@ export default function SimulacaoVariavelPage() {
 
           <Separator />
 
-          {/* TABS — PADRÃO SHADCN SEM BUG DE ALTURA */}
+          {/* ABAS */}
           <Tabs defaultValue="acumulo" className="w-full">
 
-            <TabsList className="w-full justify-center gap-4">
-              <TabsTrigger value="acumulo">A(t)</TabsTrigger>
-              <TabsTrigger value="derivada">A′(t)</TabsTrigger>
-              <TabsTrigger value="intD">I × D</TabsTrigger>
-              <TabsTrigger value="risco">Risco</TabsTrigger>
+            <TabsList className="flex w-full justify-center gap-4 flex-wrap">
+              <TabButton value="acumulo" label="A(t)" />
+              <TabButton value="derivada" label="A′(t)" />
+              <TabButton value="intD" label="I × D" />
+              <TabButton value="risco" label="Risco" />
             </TabsList>
 
             {/* A(t) */}
-            <TabsContent value="acumulo">
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Acúmulo de Água A(t)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                    <ChartAcumuloAgua data={dados.map(p => ({ t: p.t, A: p.A }))} />
-                    <Explainer>
-                      <Latex value={"A(t) = A(t-1) + \\max(0, I(t) - D_{max})"} />
-                    </Explainer>
-                  </motion.div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <ChartTab value="acumulo" title="Acúmulo de Água A(t)">
+              <ChartAcumuloAgua data={dados.map(p => ({ t: p.t, A: p.A }))} />
+              <Explainer>
+                <Latex value={"A(t) = A(t-1) + \\max(0, I(t) - D_{max})"} />
+              </Explainer>
+            </ChartTab>
 
             {/* Derivada */}
-            <TabsContent value="derivada">
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Derivada A′(t)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                    <ChartDerivada data={dados.map(p => ({ t: p.t, dA: p.dA }))} />
-                    <Explainer>
-                      <Latex value={"A'(t) = A(t) - A(t-1)"} />
-                    </Explainer>
-                  </motion.div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <ChartTab value="derivada" title="Derivada A′(t)">
+              <ChartDerivada data={dados.map(p => ({ t: p.t, dA: p.dA }))} />
+              <Explainer>
+                <Latex value={"A'(t) = A(t) - A(t-1)"} />
+              </Explainer>
+            </ChartTab>
 
-            {/* Entrada vs Drenagem */}
-            <TabsContent value="intD">
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Entrada vs Drenagem</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                    <ChartIntensidadeDrenagem data={dados.map(p => ({ t: p.t, I: p.I, D: p.D_efetiva }))} />
-                  </motion.div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            {/* Entrada × Drenagem */}
+            <ChartTab value="intD" title="Entrada vs Drenagem">
+              <ChartIntensidadeDrenagem
+                data={dados.map(p => ({ t: p.t, I: p.I, D: p.D_efetiva }))}
+              />
+            </ChartTab>
 
             {/* Risco */}
-            <TabsContent value="risco">
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Risco ao longo do tempo</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                    <ChartRisco data={dados.map(p => ({ t: p.t, risco: p.risco }))} />
-                    <Explainer>
-                      <Latex value={"R(t) = 100 \\cdot \\frac{A(t)}{A_{max}}"} />
-                    </Explainer>
-                  </motion.div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <ChartTab value="risco" title="Risco ao longo do tempo">
+              <ChartRisco data={dados.map(p => ({ t: p.t, risco: p.risco }))} />
+              <Explainer>
+                <Latex value={"R(t) = 100 \\cdot \\frac{A(t)}{A_{max}}"} />
+              </Explainer>
+            </ChartTab>
 
           </Tabs>
         </>
@@ -256,35 +265,86 @@ export default function SimulacaoVariavelPage() {
   )
 }
 
-/* ======================================================================================
-   COMPONENTES AUXILIARES
-====================================================================================== */
 
-function Param({ label, value, setValue, min }: ParamProps) {
+// -------------------------------------------
+// COMPONENTES AUXILIARES TIPADOS
+// -------------------------------------------
+
+function Param({ label, value, min, explanation, setValue }: ParamProps) {
   return (
     <div className="space-y-1">
       <Label>{label}</Label>
-      <Input type="number" min={min} value={value} onChange={e => setValue(Number(e.target.value))} />
+      <Input
+        type="number"
+        value={value}
+        min={min}
+        onChange={(e) => setValue(Number(e.target.value))}
+      />
+      {explanation && (
+        <p className="text-xs text-muted-foreground">{explanation}</p>
+      )}
     </div>
   )
 }
 
-function Kpi({ title, value, highlight }: any) {
+function Kpi({ title, value, highlight }: KpiProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
+        <CardTitle className="text-sm text-muted-foreground">
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className={cn("text-3xl font-semibold", highlight && "text-red-500")}>{value}</p>
+        <p className={cn("text-3xl font-semibold", highlight && "text-red-500")}>
+          {value}
+        </p>
       </CardContent>
     </Card>
   )
 }
 
-function Explainer({ children }: any) {
+function TabButton({ value, label }: TabButtonProps) {
   return (
-    <div className="p-4 bg-slate-700/30 rounded-lg border border-slate-600 text-sm space-y-2">
+    <TabsTrigger
+      value={value}
+      className={cn(
+        "px-5 py-2 rounded-lg text-sm font-semibold",
+        "bg-slate-800/40 border border-slate-700/40",
+        "data-[state=active]:bg-blue-600 data-[state=active]:text-white",
+        "transition-all duration-200"
+      )}
+    >
+      {label}
+    </TabsTrigger>
+  )
+}
+
+function ChartTab({ value, title, children }: ChartTabProps) {
+  return (
+    <TabsContent value={value}>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+        className="mt-6"
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>{title}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {children}
+          </CardContent>
+        </Card>
+      </motion.div>
+    </TabsContent>
+  )
+}
+
+function Explainer({ children }: ExplainerProps) {
+  return (
+    <div className="p-4 bg-slate-700/30 border border-slate-500/40 rounded-lg text-sm space-y-2">
       {children}
     </div>
   )
