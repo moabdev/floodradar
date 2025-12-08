@@ -208,7 +208,7 @@ A'(t) = -D(t)
               <Latex inline value={"A'(t) \\approx I(t)"} /> é grande e positiva, e:
               <LatexBlock>
 {`
-\\lim_{t \\to +\\infty} A(t) = +\\infty \\quad \\text{(modelagem idealizada)}
+\\lim_{t \\to +\\infty} A(t) = +\\infty \\quad 
 `}
               </LatexBlock>
               Na prática, isso representa uma enchente inevitável se não houver aumento de drenagem.
