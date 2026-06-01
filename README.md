@@ -1,232 +1,231 @@
-# 🛰️ FloodRadar — Simulação Hidrológica com Cálculo I
+# 🌊 FloodRadar — Urban Flood Modeling Using Calculus I and Numerical Integration
 
-**FloodRadar** é uma aplicação interativa construída com **Next.js + shadcn/ui + Recharts** que modela cenários de enchentes utilizando conceitos fundamentais de **Cálculo I**, como derivada, integral, limites e funções.
+**FloodRadar** is an interactive web application developed with **Next.js**, **shadcn/ui**, and **Recharts** to simulate urban flooding scenarios through the application of fundamental concepts from **Calculus I**, including:
 
-O projeto **não usa autenticação nem banco de dados**, funcionando inteiramente no cliente.
-Ideal para apresentações, demonstrações, projetos de disciplina e estudos sobre modelagem hidrológica.
+* Derivatives
+* Numerical integration
+* Limits
+* Functions
+* Finite differences
 
----
+The project demonstrates how mathematical modeling can be applied to represent water accumulation dynamics and flood-risk conditions caused by intense rainfall and drainage limitations.
 
-## 🚀 Funcionalidades
+Designed for:
 
-### 🔢 **Simulação Matemática em Tempo Real**
-
-A partir de três parâmetros:
-
-* **I(t)** → intensidade da chuva
-* **D(t)** → capacidade de drenagem
-* **t** → duração do evento
-
-o sistema calcula:
-
-* **A(t)** → acúmulo de água
-* **A′(t)** → derivada (taxa de variação)
-* **risco(t)** → indicador percentual de risco
-
-Tudo é atualizado em tempo real com gráficos interativos.
+* Academic presentations
+* Applied mathematics demonstrations
+* Hydrological modeling studies
+* Computational simulation projects
 
 ---
 
-### 📊 **Dashboard Acadêmico Completo**
+# 🚀 Features
 
-Inclui:
+## 🔢 Real-Time Mathematical Simulation
 
-* KPIs fundamentais (A(t), A′(t), risco)
-* Gráficos de:
+Using three primary parameters:
 
-  * Acúmulo A(t)
-  * Derivada A′(t)
-  * Risco(t)
-  * Intensidade × Drenagem
-  * Radar de risco
+* **I(t)** → rainfall intensity
+* **D(t)** → drainage capacity
+* **t** → event duration
 
-Perfeito para análise visual e apresentação de comportamento hidrológico.
+the system computes:
 
----
+* **A(t)** → accumulated water volume
+* **A′(t)** → accumulation rate of change
+* **Risk(t)** → hydrological risk indicator
 
-### 🔬 **Modelo Matemático Explicado**
-
-Página dedicada com:
-
-* Renderização LaTeX via **react-katex**
-* Dedução das fórmulas
-* Interpretação física e matemática
-* Limites e cenários extremos
-
-Mostra claramente como **Cálculo I** fundamenta o projeto.
+All values are updated dynamically through interactive visualizations.
 
 ---
 
-### 📘 **Explicações Didáticas**
+# 📊 Interactive Academic Dashboard
 
-Ideal para apresentação do projeto:
+The dashboard includes:
 
-* Integral como acúmulo
-* Derivada como velocidade do risco
-* Tradução matemática → gráficos
-* Relação entre o modelo e eventos reais
+* Real-time KPIs
+* Flood accumulation monitoring
+* Derivative analysis
+* Risk estimation
+* Comparative rainfall × drainage analysis
+* Radar-based risk visualization
 
----
+### Included Charts
 
-## 🧠 Modelo Matemático
+| Chart                | Purpose                 |
+| -------------------- | ----------------------- |
+| AreaChart            | Water accumulation A(t) |
+| LineChart            | Derivative A′(t)        |
+| Multi-LineChart      | Rainfall vs Drainage    |
+| RadialBarChart       | Flood-risk indicator    |
+| Historical LineChart | Risk evolution          |
 
-### 1) Acúmulo de água
-
-[
-A(t + \Delta t) = A(t) + (I - D)\Delta t
-]
-
-Como usamos (\Delta t = 1):
-
-[
-A(t+1) = A(t) + (I - D)
-]
+All charts are responsive and optimized for scientific presentation.
 
 ---
 
-### 2) Derivada — taxa de variação
+# 🔬 Mathematical Modeling
 
-[
-A'(t) = I(t) - D(t)
-]
+## 1) Water Accumulation Model
 
-* (A'(t) > 0) → acúmulo cresce
-* (A'(t) = 0) → equilíbrio
-* (A'(t) < 0) → escoamento maior que entrada
+The accumulation function is defined as:
 
----
+A(t+\Delta t)=A(t)+(I-D)\Delta t
 
-### 3) Risco hidrológico
+Assuming:
 
-[
-\text{Risco}(t) = \min(100,; 2.4 \cdot A(t))
-]
+\Delta t=1
 
-Escala simples para interpretação imediata.
+the discrete model becomes:
+
+A(t+1)=A(t)+(I-D)
+
+This equation represents how water accumulates over time depending on the relationship between rainfall intensity and drainage capacity.
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## 2) Derivative — Rate of Change
 
-| Área       | Tecnologia                  |
-| ---------- | --------------------------- |
-| Framework  | **Next.js 14 (App Router)** |
-| UI         | **shadcn/ui + TailwindCSS** |
-| Matemática | **react-katex (LaTeX)**     |
-| Gráficos   | **Recharts**                |
-| Estilo     | Dark/Light mode automático  |
-| Estado     | Hooks nativos do React      |
+The instantaneous accumulation variation is modeled by:
+
+A'(t)=I(t)-D(t)
+
+Interpretation:
+
+* **A′(t) > 0** → accumulation increases
+* **A′(t) = 0** → equilibrium state
+* **A′(t) < 0** → drainage exceeds rainfall input
 
 ---
 
-## 📦 Instalação
+## 3) Hydrological Risk Function
 
-Clone o projeto:
+Flood risk is estimated through:
+
+Risk(t)=\min(100,2.4\cdot A(t))
+
+This simplified metric provides an intuitive representation of flood severity.
+
+---
+
+# 📘 Educational Purpose
+
+FloodRadar was designed to connect:
+
+* Mathematical modeling
+* Hydrological interpretation
+* Scientific visualization
+* Computational simulation
+* Modern web development
+
+The platform serves as an educational bridge between theoretical calculus concepts and real-world environmental applications.
+
+---
+
+# 🛠️ Technologies
+
+| Area                   | Technology              |
+| ---------------------- | ----------------------- |
+| Framework              | Next.js 14 (App Router) |
+| UI                     | shadcn/ui + TailwindCSS |
+| Mathematical Rendering | react-katex             |
+| Visualization          | Recharts                |
+| Styling                | TailwindCSS             |
+| State Management       | Native React Hooks      |
+
+---
+
+# 📦 Installation
+
+Clone the repository:
 
 ```bash
-git clone https://github.com/seuusuario/floodradar.git
+git clone https://github.com/moabdev/floodradar.git
 cd floodradar
 ```
 
-Instale dependências:
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-Adicione os componentes shadcn (caso necessário):
-
-```bash
-npx shadcn-ui@latest init
-```
-
-Rode o projeto localmente:
+Run the project locally:
 
 ```bash
 npm run dev
 ```
 
-Abra no navegador:
+Open in browser:
 
-```
+```txt
 http://localhost:3000
 ```
 
 ---
 
-## 🧩 Estrutura das Páginas
+# 🧩 Project Structure
 
-```
+```txt
 app/
- ├─ page.tsx                → Landing
- ├─ dashboard/              → Dashboard acadêmico
- ├─ simulacao/              → Simulador interativo
- ├─ modelo-matematico/      → Fórmulas e LaTeX
- ├─ explicacoes/            → Material didático
- └─ layout.tsx              → Navegação + tema
+ ├─ page.tsx                → Landing page
+ ├─ dashboard/              → Academic dashboard
+ ├─ simulacao/              → Interactive simulation
+ ├─ modelo-matematico/      → Mathematical explanation
+ ├─ explicacoes/            → Educational content
+ └─ layout.tsx              → Navigation and theme
 ```
 
 ---
 
-## 📈 Gráficos Utilizados
+# 🎯 Academic Applications
 
-| Gráfico               | Função                 |
-| --------------------- | ---------------------- |
-| **AreaChart**         | A(t) — acúmulo         |
-| **LineChart**         | A′(t) — derivada       |
-| **LineChart (duplo)** | Intensidade × Drenagem |
-| **RadialBarChart**    | Radar de risco         |
-| **LineChart**         | Histórico de risco     |
+FloodRadar is suitable for:
 
-Todos responsivos, minimalistas e integrados ao tema do site.
-
----
-
-## 🎯 Objetivo Didático
-
-Este projeto conecta:
-
-* Modelagem matemática (funções e derivadas)
-* Interpretação física (enchentes)
-* Visualização computacional (gráficos)
-* Desenvolvimento web moderno (Next.js)
-
-Ideal para:
-
-* Trabalhos de Cálculo I
-* Apresentações acadêmicas
-* Estudos de modelagem hidrológica
-* Portfólio técnico
+* Calculus I projects
+* Numerical modeling demonstrations
+* Hydrological simulations
+* Applied mathematics presentations
+* Scientific computing portfolios
+* Engineering education
 
 ---
 
-## 🔧 Customização
+# 🔧 Customization
 
-Você pode alterar facilmente:
+The project can be easily extended by modifying:
 
-* Fator de risco (2.4 → qualquer valor)
-* Fórmulas de A(t) ou A′(t)
-* Gráficos e cores
-* Cenários do dashboard (I, D, horas)
-
----
-
-## 🌐 Deploy
-
-O projeto funciona **perfeitamente na Vercel**, sem configurações adicionais.
-
-Para publicar:
-
-```bash
-git push
-```
-
-E conecte o repositório à Vercel.
+* Risk coefficients
+* Differential equations
+* Numerical methods
+* Dashboard scenarios
+* Visualization styles
+* Hydrological parameters
 
 ---
 
-## 📄 Licença
+# 🌌 Future Work
 
-MIT — livre para estudo, modificação e uso educacional.
+Planned future extensions include:
+
+* Real-time sensor integration
+* Machine learning flood prediction
+* Expansion of numerical integration and dynamic modeling techniques to rocket trajectory and orbital simulation in aerospace systems
 
 ---
+
+# 🌐 Deployment
+
+The project is fully compatible with:
+
+* Vercel
+* Netlify
+* Static hosting platforms
+
+Deploy easily by connecting the repository to your preferred hosting provider.
+
+---
+
+# 📄 License
+
+MIT License — free for educational, academic, and research purposes.
