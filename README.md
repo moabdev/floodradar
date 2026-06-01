@@ -50,7 +50,7 @@ The dashboard includes:
 * Comparative rainfall × drainage analysis
 * Radar-based risk visualization
 
-### Included Charts
+## Included Charts
 
 | Chart                | Purpose                 |
 | -------------------- | ----------------------- |
@@ -70,15 +70,21 @@ All charts are responsive and optimized for scientific presentation.
 
 The accumulation function is defined as:
 
-A(t+\Delta t)=A(t)+(I-D)\Delta t
+$$
+A(t+\Delta t)=A(t)+(R-D)\Delta t
+$$
 
 Assuming:
 
-\Delta t=1
+$$
+\Delta t = 1
+$$
 
-the discrete model becomes:
+the discrete numerical approximation becomes:
 
-A(t+1)=A(t)+(I-D)
+$$
+A(t+1)=A(t)+(R-D)
+$$
 
 This equation represents how water accumulates over time depending on the relationship between rainfall intensity and drainage capacity.
 
@@ -88,13 +94,15 @@ This equation represents how water accumulates over time depending on the relati
 
 The instantaneous accumulation variation is modeled by:
 
-A'(t)=I(t)-D(t)
+$$
+A'(t)=R(t)-D(t)
+$$
 
-Interpretation:
+### Interpretation
 
-* **A′(t) > 0** → accumulation increases
-* **A′(t) = 0** → equilibrium state
-* **A′(t) < 0** → drainage exceeds rainfall input
+* $A'(t) > 0$ → accumulation increases
+* $A'(t) = 0$ → equilibrium state
+* $A'(t) < 0$ → drainage exceeds rainfall input
 
 ---
 
@@ -102,7 +110,9 @@ Interpretation:
 
 Flood risk is estimated through:
 
-Risk(t)=\min(100,2.4\cdot A(t))
+$$
+Risk(t)=\min(100,\ 2.4\cdot A(t))
+$$
 
 This simplified metric provides an intuitive representation of flood severity.
 
@@ -211,6 +221,7 @@ Planned future extensions include:
 * Real-time sensor integration
 * Machine learning flood prediction
 * Expansion of numerical integration and dynamic modeling techniques to rocket trajectory and orbital simulation in aerospace systems
+* Application of Calculus II concepts to orbital mechanics and aerospace trajectory optimization
 
 ---
 
