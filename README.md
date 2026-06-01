@@ -25,7 +25,7 @@ Designed for:
 
 Using three primary parameters:
 
-* **I(t)** → rainfall intensity
+* **R(t)** → rainfall intensity
 * **D(t)** → drainage capacity
 * **t** → event duration
 
